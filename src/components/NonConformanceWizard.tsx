@@ -45,7 +45,7 @@ export const NonConformanceWizard: React.FC = () => {
     return () => clearTimeout(timer);
   }, [data]);
 
-  const update = (field: keyof Data, value: any) => {
+  const update = <K extends keyof Data>(field: K, value: Data[K]) => {
     setData(d => ({ ...d, [field]: value }));
   };
 
@@ -71,7 +71,11 @@ export const NonConformanceWizard: React.FC = () => {
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <div className="label">Severity</div>
-            <select className="input" value={data.severity} onChange={e => update('severity', e.target.value as any)}>
+            <select
+              className="input"
+              value={data.severity}
+              onChange={e => update('severity', e.target.value as Data['severity'])}
+            >
               <option>Low</option>
               <option>Medium</option>
               <option>High</option>
@@ -92,10 +96,14 @@ export const NonConformanceWizard: React.FC = () => {
         </div>
         <div>
           <div className="label">Attachments (photo / voice note)</div>
-          <input type="file" multiple onChange={e => {
-            const files = Array.from(e.target.files || []).map(f => f.name);
-            update('attachments', [...data.attachments, ...files]);
-          }} />
+          <input
+            type="file"
+            multiple
+            onChange={e => {
+              const files = Array.from(e.target.files || []).map(f => f.name);
+              update('attachments', [...data.attachments, ...files]);
+            }}
+          />
           {data.attachments.length > 0 && (
             <div style={{ marginTop: 4, fontSize: 12 }}>
               Attached: {data.attachments.join(', ')}
