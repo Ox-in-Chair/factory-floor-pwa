@@ -33,6 +33,7 @@ export type FooterDocControl = {
   documentNumber: string;
   documentName: string;
   revision: string;
-  revisionDate: string;
+  revisionDate?: string; // auto-updated when revision changes
   controlled: boolean;
 };
+
