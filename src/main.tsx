@@ -1,11 +1,10 @@
 ﻿import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App";
-import "./index.css";
-import "./global-theme.css";
+import "@/styles/global.css";
+import "@/styles/tokens.css";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const container = document.getElementById("root") || document.createElement("div");
+if (!container.id) container.id = "root";
+document.body.appendChild(container);
+createRoot(container).render(<App />);

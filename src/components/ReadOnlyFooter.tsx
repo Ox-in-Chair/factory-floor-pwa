@@ -1,52 +1,32 @@
-﻿import React, { useEffect, useState } from "react";
-import { loadForm } from "../lib/db";
-import type { FooterDocControl } from "../lib/types";
+﻿import React from "react";
+import { settingsStore } from "@/state/settingsStore";
 
-type Props = {
-  moduleKey: "shiftHandover" | "nonConformance" | "maintenance" | "complaint";
-};
-
-const keyFor = (m: string) => `footer-doc-control-${m}-v1`;
-
-export const ReadOnlyFooter: React.FC<Props> = ({ moduleKey }) => {
-  const [ctrl, setCtrl] = useState<FooterDocControl | null>(null);
-  useEffect(() => {
-    loadForm(keyFor(moduleKey)).then((existing: any) => {
-      if (existing) setCtrl(existing as FooterDocControl);
-    });
-  }, [moduleKey]);
-  if (!ctrl) return null;
+export const ReadOnlyFooter: React.FC<{ moduleKey: string }> = ({ moduleKey }) => {
+  const cfg = settingsStore.getState();
+  const meta = (cfg.docMeta as any)[moduleKey] || {};
   return (
     <div
+      className="footer-readonly"
       style={{
-        marginTop: 16,
-        padding: 12,
-        borderTop: "1px solid rgba(0,0,0,0.1)",
         display: "flex",
-        gap: 24,
+        gap: 16,
         flexWrap: "wrap",
+        padding: 8,
+        borderTop: "1px solid rgba(0,0,0,0.1)",
         fontSize: 12
       }}
     >
       <div>
-        <div className="label">Document#</div>
-        <div>{ctrl.documentNumber}</div>
+        <strong>Doc#: </strong> {meta.docNumber || "-"}
       </div>
       <div>
-        <div className="label">Name</div>
-        <div>{ctrl.documentName}</div>
+        <strong>Name: </strong> {meta.docName || "-"}
       </div>
       <div>
-        <div className="label">Revision</div>
-        <div>{ctrl.revision}</div>
+        <strong>Rev: </strong> {meta.revision || "-"} on {meta.revisionDateISO ? new Date(meta.revisionDateISO).toLocaleDateString() : "-"}
       </div>
       <div>
-        <div className="label">Rev Date</div>
-        <div>{new Date(ctrl.revisionDate).toLocaleString()}</div>
-      </div>
-      <div>
-        <div className="label">Status</div>
-        <div>{ctrl.controlled ? "Controlled" : "Uncontrolled"}</div>
+        <strong>Status: </strong> {meta.controlled ? "Controlled" : "Uncontrolled"}
       </div>
     </div>
   );

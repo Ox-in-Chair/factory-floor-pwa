@@ -6,18 +6,18 @@ type Attachment = {
   label: string;
 };
 
-type ShiftHandoverForm = {
-  summary: string;
-  handoverDetails: string;
+type NonConformanceForm = {
+  issueDescription: string;
+  recommendedAction: string;
   attachments: Attachment[];
   lastSaved: string;
 };
 
-const STORAGE_KEY = "wizard-shift-handover";
+const STORAGE_KEY = "wizard-non-conformance";
 
-const defaultForm: ShiftHandoverForm = {
-  summary: "",
-  handoverDetails: "",
+const defaultForm: NonConformanceForm = {
+  issueDescription: "",
+  recommendedAction: "",
   attachments: [],
   lastSaved: ""
 };
@@ -30,18 +30,17 @@ const debounce = (fn: () => void, delay: number) => {
   };
 };
 
-export const ShiftHandoverWizard: React.FC = () => {
-  const [form, setForm] = useState<ShiftHandoverForm>(() => {
+export const NonConformanceWizard: React.FC = () => {
+  const [form, setForm] = useState<NonConformanceForm>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return { ...defaultForm, ...JSON.parse(stored) };
     } catch {}
     return defaultForm;
   });
-  const [errors, setErrors] = useState<{ summary?: string; handoverDetails?: string }>({});
+  const [errors, setErrors] = useState<{ issueDescription?: string; recommendedAction?: string }>({});
   const saveRef = useRef<() => void>();
 
-  // Debounced save
   useEffect(() => {
     saveRef.current = debounce(() => {
       const updated = { ...form, lastSaved: new Date().toISOString() };
@@ -50,11 +49,10 @@ export const ShiftHandoverWizard: React.FC = () => {
     }, 500);
   }, [form]);
 
-  // Trigger validation + save on change
   useEffect(() => {
     const newErrors: typeof errors = {};
-    if (!form.summary.trim()) newErrors.summary = "Summary is required.";
-    if (!form.handoverDetails.trim()) newErrors.handoverDetails = "Handover details are required.";
+    if (!form.issueDescription.trim()) newErrors.issueDescription = "Issue description required.";
+    if (!form.recommendedAction.trim()) newErrors.recommendedAction = "Recommended action required.";
     setErrors(newErrors);
     saveRef.current && saveRef.current();
   }, [form]);
@@ -75,34 +73,36 @@ export const ShiftHandoverWizard: React.FC = () => {
 
   return (
     <div className="card">
-      <h3>Shift-Change Handover Report</h3>
+      <h3>Non-conformance Advice</h3>
       <div style={{ display: "grid", gap: 12, marginTop: 8 }}>
         <div>
-          <label style={{ fontWeight: 600 }}>Summary *</label>
+          <label style={{ fontWeight: 600 }}>Issue Description *</label>
           <textarea
-            aria-label="Summary"
-            value={form.summary}
-            onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
+            aria-label="Issue Description"
+            value={form.issueDescription}
+            onChange={e => setForm(f => ({ ...f, issueDescription: e.target.value }))}
             rows={3}
             style={{ width: "100%" }}
           />
-          {errors.summary && <div style={{ color: "red", fontSize: 12 }}>{errors.summary}</div>}
-        </div>
-        <div>
-          <label style={{ fontWeight: 600 }}>Handover Details *</label>
-          <textarea
-            aria-label="Handover details"
-            value={form.handoverDetails}
-            onChange={e => setForm(f => ({ ...f, handoverDetails: e.target.value }))}
-            rows={4}
-            style={{ width: "100%" }}
-          />
-          {errors.handoverDetails && (
-            <div style={{ color: "red", fontSize: 12 }}>{errors.handoverDetails}</div>
+          {errors.issueDescription && (
+            <div style={{ color: "red", fontSize: 12 }}>{errors.issueDescription}</div>
           )}
         </div>
         <div>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Attachments</div>
+          <label style={{ fontWeight: 600 }}>Recommended Action *</label>
+          <textarea
+            aria-label="Recommended Action"
+            value={form.recommendedAction}
+            onChange={e => setForm(f => ({ ...f, recommendedAction: e.target.value }))}
+            rows={3}
+            style={{ width: "100%" }}
+          />
+          {errors.recommendedAction && (
+            <div style={{ color: "red", fontSize: 12 }}>{errors.recommendedAction}</div>
+          )}
+        </div>
+        <div>
+          <div style={{ fontWeight: 600 }}>Attachments</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {form.attachments.map(a => (
               <div
@@ -112,8 +112,6 @@ export const ShiftHandoverWizard: React.FC = () => {
                   border: "1px solid rgba(0,0,0,0.1)",
                   borderRadius: 8,
                   background: "#f9f9f9",
-                  display: "flex",
-                  flexDirection: "column",
                   minWidth: 120
                 }}
               >
@@ -142,3 +140,8 @@ export const ShiftHandoverWizard: React.FC = () => {
     </div>
   );
 };
+
+
+export default NonConformanceWizard;
+
+

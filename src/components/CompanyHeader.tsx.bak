@@ -1,38 +1,55 @@
-/* src/components/CompanyHeader.tsx */
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
+import { subscribe } from "../lib/settingsStore";
 import type { CompanyProfile } from "../lib/types";
 
 export const CompanyHeader: React.FC = () => {
-  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [profile, setProfile] = useState<CompanyProfile>({ name: "" });
 
   useEffect(() => {
-    subscribe(c => setConfig(c));
-    loadConfig().then(c => setConfig(c));
+    const unsubscribe = subscribe(config => {
+      setProfile(config.companyProfile);
+    });
+    return unsubscribe;
   }, []);
 
-  if (!config) return null;
-
   return (
-    <div className="company-header" aria-label="Company branding">
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        {config.logoBase64 ? (
-          <img src={config.logoBase64} alt="Company logo" />
+    <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {profile.logoBase64 ? (
+          <img
+            src={profile.logoBase64}
+            alt="Company logo"
+            style={{
+              width: 64,
+              height: 64,
+              objectFit: "cover",
+              borderRadius: 6,
+              border: "2px solid var(--primary-accent)"
+            }}
+          />
         ) : (
-          <div style={{
-            width: 64,
-            height: 64,
-            background: "#eee",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 6,
-            fontSize: 12,
-            color: "#666"
-          }}>
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              background: "#eee",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 6,
+              fontSize: 14,
+              color: "#666",
+              fontWeight: 600
+            }}
+          >
             Logo
           </div>
         )}
-        <div className="name">{config.companyName || "Your Company Name"}</div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: "1.75rem", color: "var(--text-color)" }}>
+            {profile.name || "Your Company Name"}
+          </div>
+        </div>
       </div>
     </div>
   );

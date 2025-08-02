@@ -1,10 +1,6 @@
 ﻿import type { AppConfig, CompanyProfile, TabLabels, FooterDocControl } from "./types";
 
 const STORAGE_KEY = "app-config-v1";
-const PRESETS_KEY = "app-presets-v1";
-
-type PresetMap = Record<string, AppConfig>;
-
 let subscribers: ((config: AppConfig) => void)[] = [];
 
 let current: AppConfig = {
@@ -46,14 +42,6 @@ function persist() {
 
 load();
 
-function notify() {
-  subscribers.forEach(s => {
-    try {
-      s(current);
-    } catch {}
-  });
-}
-
 export function getAppConfig(): AppConfig {
   return current;
 }
@@ -69,13 +57,13 @@ export function subscribe(fn: (config: AppConfig) => void): () => void {
 export function updateCompanyProfile(profile: Partial<CompanyProfile>) {
   current.companyProfile = { ...current.companyProfile, ...profile };
   persist();
-  notify();
+  subscribers.forEach(s => s(current));
 }
 
 export function updateTabLabels(labels: Partial<TabLabels>) {
   current.tabLabels = { ...current.tabLabels, ...labels };
   persist();
-  notify();
+  subscribers.forEach(s => s(current));
 }
 
 export function updateFooterControl(footer: Partial<FooterDocControl>) {
@@ -85,66 +73,5 @@ export function updateFooterControl(footer: Partial<FooterDocControl>) {
     current.footer.revisionDate = new Date().toISOString();
   }
   persist();
-  notify();
-}
-
-/* Preset management */
-function loadPresets(): PresetMap {
-  try {
-    const raw = localStorage.getItem(PRESETS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function persistPresets(presets: PresetMap) {
-  try {
-    localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
-  } catch {}
-}
-
-export function savePreset(name: string) {
-  if (!name) return;
-  const presets = loadPresets();
-  presets[name] = current;
-  persistPresets(presets);
-}
-
-export function listPresets(): string[] {
-  return Object.keys(loadPresets());
-}
-
-export function applyPreset(name: string) {
-  const presets = loadPresets();
-  if (presets[name]) {
-    current = { ...current, ...presets[name] };
-    persist();
-    notify();
-  }
-}
-
-export function exportPreset(name: string): string | null {
-  const presets = loadPresets();
-  if (presets[name]) {
-    try {
-      return JSON.stringify(presets[name], null, 2);
-    } catch {}
-  }
-  return null;
-}
-
-export function importPreset(json: string, overwriteName?: string) {
-  try {
-    const parsed = JSON.parse(json) as AppConfig;
-    const presets = loadPresets();
-    const key = overwriteName || `imported-${Date.now()}`;
-    presets[key] = parsed;
-    persistPresets(presets);
-    current = { ...current, ...parsed };
-    persist();
-    notify();
-    return key;
-  } catch {
-    return null;
-  }
+  subscribers.forEach(s => s(current));
 }

@@ -142,3 +142,4 @@ export const ShiftHandoverWizard: React.FC = () => {
     </div>
   );
 };
+

@@ -1,35 +1,16 @@
-﻿import { openDB } from "idb";
-
-const DB_NAME = "factory-floor";
-const STORE_LOG = "wal";
-const STORE_FORMS = "forms";
-
-export async function getDb() {
-  return openDB(DB_NAME, 1, {
-    upgrade(db) {
-      if (!db.objectStoreNames.contains(STORE_LOG)) {
-        db.createObjectStore(STORE_LOG, { keyPath: "id", autoIncrement: true });
-      }
-      if (!db.objectStoreNames.contains(STORE_FORMS)) {
-        db.createObjectStore(STORE_FORMS, { keyPath: "formId" });
-      }
-    }
-  });
+﻿/**
+ * Minimal form save/load stubs using localStorage to avoid breaking existing wizards.
+ * Key is passed in by caller.
+ */
+export async function saveForm(key: string, data: unknown): Promise<void> {
+  try {
+    localStorage.setItem(`form:${key}`, JSON.stringify(data));
+  } catch {}
 }
-
-export async function appendLog(entry: any) {
-  const db = await getDb();
-  await db.add(STORE_LOG, { ...entry, timestamp: Date.now() });
-}
-
-export async function saveForm(formId: string, data: any) {
-  const db = await getDb();
-  await db.put(STORE_FORMS, { formId, data, updatedAt: Date.now() });
-  await appendLog({ type: "form-save", formId, data });
-}
-
-export async function loadForm(formId: string) {
-  const db = await getDb();
-  const rec = await db.get(STORE_FORMS, formId);
-  return rec?.data || null;
+export async function loadForm<T>(key: string): Promise<T | null> {
+  try {
+    const v = localStorage.getItem(`form:${key}`);
+    if (v) return JSON.parse(v) as T;
+  } catch {}
+  return null;
 }

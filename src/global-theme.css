@@ -12,7 +12,7 @@
   --shadow: 0 16px 40px -8px rgba(0,86,163,0.35);
 }
 
-* { box-sizing: border-box; }
+* { box-sizing:border-box; }
 body {
   margin:0;
   font-family: var(--font-family) !important;
@@ -24,9 +24,10 @@ body {
   flex-direction:column;
 }
 
-h1,h2,h3,h4,h5,h6,p,span,label,a {
+h1,h2,h3,h4,h5,h6,p,span,label,a,input,button {
   color: var(--text-color) !important;
   margin:0;
+  font-family: var(--font-family) !important;
 }
 
 /* Navigation tabs */
@@ -37,7 +38,6 @@ h1,h2,h3,h4,h5,h6,p,span,label,a {
   font-size: var(--tab-font-size);
 }
 .tab-button {
-  font-family: var(--font-family) !important;
   font-weight:600;
   background: var(--secondary-accent-1);
   color:white !important;
@@ -58,7 +58,6 @@ h1,h2,h3,h4,h5,h6,p,span,label,a {
 
 /* Buttons */
 button {
-  font-family: var(--font-family) !important;
   font-weight:600;
   background: var(--primary-accent);
   color:white !important;
@@ -79,13 +78,13 @@ button.secondary-2 { background: var(--secondary-accent-2); }
 button.secondary-3 { background: var(--secondary-accent-3); }
 
 input, select, textarea {
-  font-family: var(--font-family) !important;
   border:1px solid rgba(0,0,0,0.2);
   padding:10px 14px;
   border-radius:8px;
   color: var(--text-color) !important;
   background:#fff;
   width:100%;
+  font-family: var(--font-family) !important;
 }
 
 .card {
@@ -106,12 +105,12 @@ input, select, textarea {
   border-top:1px solid rgba(0,0,0,0.1);
 }
 
-/* Responsive tokens */
+/* Responsive basics */
 .container { flex:1; display:flex; flex-direction:column; padding:12px; }
 @media (min-width:641px) { .layout { display:flex; gap:12px; } }
 @media (min-width:1024px) { .nav { flex:0 0 220px; } }
 
-/* Hide legacy theme UI if still present */
+/* Hide legacy theme selectors */
 .theme-picker, .theme-selector, .preset-themes, .scheme-name, .color-control {
   display:none !important;
 }

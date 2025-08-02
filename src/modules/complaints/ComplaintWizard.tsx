@@ -6,18 +6,20 @@ type Attachment = {
   label: string;
 };
 
-type ShiftHandoverForm = {
-  summary: string;
-  handoverDetails: string;
+type ComplaintForm = {
+  customerName: string;
+  complaintDetails: string;
+  resolutionSuggestion: string;
   attachments: Attachment[];
   lastSaved: string;
 };
 
-const STORAGE_KEY = "wizard-shift-handover";
+const STORAGE_KEY = "wizard-complaint";
 
-const defaultForm: ShiftHandoverForm = {
-  summary: "",
-  handoverDetails: "",
+const defaultForm: ComplaintForm = {
+  customerName: "",
+  complaintDetails: "",
+  resolutionSuggestion: "",
   attachments: [],
   lastSaved: ""
 };
@@ -30,18 +32,20 @@ const debounce = (fn: () => void, delay: number) => {
   };
 };
 
-export const ShiftHandoverWizard: React.FC = () => {
-  const [form, setForm] = useState<ShiftHandoverForm>(() => {
+export const ComplaintWizard: React.FC = () => {
+  const [form, setForm] = useState<ComplaintForm>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return { ...defaultForm, ...JSON.parse(stored) };
     } catch {}
     return defaultForm;
   });
-  const [errors, setErrors] = useState<{ summary?: string; handoverDetails?: string }>({});
+  const [errors, setErrors] = useState<{
+    customerName?: string;
+    complaintDetails?: string;
+  }>({});
   const saveRef = useRef<() => void>();
 
-  // Debounced save
   useEffect(() => {
     saveRef.current = debounce(() => {
       const updated = { ...form, lastSaved: new Date().toISOString() };
@@ -50,11 +54,10 @@ export const ShiftHandoverWizard: React.FC = () => {
     }, 500);
   }, [form]);
 
-  // Trigger validation + save on change
   useEffect(() => {
     const newErrors: typeof errors = {};
-    if (!form.summary.trim()) newErrors.summary = "Summary is required.";
-    if (!form.handoverDetails.trim()) newErrors.handoverDetails = "Handover details are required.";
+    if (!form.customerName.trim()) newErrors.customerName = "Customer name required.";
+    if (!form.complaintDetails.trim()) newErrors.complaintDetails = "Complaint details required.";
     setErrors(newErrors);
     saveRef.current && saveRef.current();
   }, [form]);
@@ -75,34 +78,44 @@ export const ShiftHandoverWizard: React.FC = () => {
 
   return (
     <div className="card">
-      <h3>Shift-Change Handover Report</h3>
+      <h3>Complaint Handling</h3>
       <div style={{ display: "grid", gap: 12, marginTop: 8 }}>
         <div>
-          <label style={{ fontWeight: 600 }}>Summary *</label>
-          <textarea
-            aria-label="Summary"
-            value={form.summary}
-            onChange={e => setForm(f => ({ ...f, summary: e.target.value }))}
-            rows={3}
-            style={{ width: "100%" }}
+          <label style={{ fontWeight: 600 }}>Customer Name *</label>
+          <input
+            aria-label="Customer Name"
+            value={form.customerName}
+            onChange={e => setForm(f => ({ ...f, customerName: e.target.value }))}
           />
-          {errors.summary && <div style={{ color: "red", fontSize: 12 }}>{errors.summary}</div>}
-        </div>
-        <div>
-          <label style={{ fontWeight: 600 }}>Handover Details *</label>
-          <textarea
-            aria-label="Handover details"
-            value={form.handoverDetails}
-            onChange={e => setForm(f => ({ ...f, handoverDetails: e.target.value }))}
-            rows={4}
-            style={{ width: "100%" }}
-          />
-          {errors.handoverDetails && (
-            <div style={{ color: "red", fontSize: 12 }}>{errors.handoverDetails}</div>
+          {errors.customerName && (
+            <div style={{ color: "red", fontSize: 12 }}>{errors.customerName}</div>
           )}
         </div>
         <div>
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>Attachments</div>
+          <label style={{ fontWeight: 600 }}>Complaint Details *</label>
+          <textarea
+            aria-label="Complaint Details"
+            value={form.complaintDetails}
+            onChange={e => setForm(f => ({ ...f, complaintDetails: e.target.value }))}
+            rows={3}
+            style={{ width: "100%" }}
+          />
+          {errors.complaintDetails && (
+            <div style={{ color: "red", fontSize: 12 }}>{errors.complaintDetails}</div>
+          )}
+        </div>
+        <div>
+          <label style={{ fontWeight: 600 }}>Resolution Suggestion</label>
+          <textarea
+            aria-label="Resolution Suggestion"
+            value={form.resolutionSuggestion}
+            onChange={e => setForm(f => ({ ...f, resolutionSuggestion: e.target.value }))}
+            rows={2}
+            style={{ width: "100%" }}
+          />
+        </div>
+        <div>
+          <div style={{ fontWeight: 600 }}>Attachments</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {form.attachments.map(a => (
               <div
@@ -112,8 +125,6 @@ export const ShiftHandoverWizard: React.FC = () => {
                   border: "1px solid rgba(0,0,0,0.1)",
                   borderRadius: 8,
                   background: "#f9f9f9",
-                  display: "flex",
-                  flexDirection: "column",
                   minWidth: 120
                 }}
               >
@@ -142,3 +153,8 @@ export const ShiftHandoverWizard: React.FC = () => {
     </div>
   );
 };
+
+
+export default ComplaintWizard;
+
+

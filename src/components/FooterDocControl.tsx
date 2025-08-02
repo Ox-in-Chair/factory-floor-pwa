@@ -1,7 +1,7 @@
 ﻿import type { FooterDocControl } from "../lib/types";
 /* src/components/FooterDocControl.tsx */
 import React, { useEffect, useState } from "react";
-import { AppConfig, loadConfig } from "../lib/settingsStore";
+import { AppConfig, loadConfig } from "@/state/legacySettingsStoreWrapper";
 
 export const FooterDocControl: React.FC<{ editable?: boolean; onChange?: (doc: AppConfig["docControl"]) => void }> = ({ editable = false, onChange }) => {
   const [doc, setDoc] = useState<AppConfig["docControl"] | null>(null);
@@ -47,4 +47,5 @@ export const FooterDocControl: React.FC<{ editable?: boolean; onChange?: (doc: A
     </div>
   );
 };
+
 

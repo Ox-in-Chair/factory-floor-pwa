@@ -1,263 +1,212 @@
-﻿/* src/components/SettingsPage.tsx */
-import React, { useEffect, useState } from "react";
-import { AppConfig, loadConfig, updateConfig } from "../lib/settingsStore";
+﻿import React, { useEffect, useState } from "react";
+import { getAppConfig, subscribe, updateCompanyProfile, updateTabLabels, updateFooterControl, savePreset, listPresets, applyPreset, exportPreset, importPreset } from "@/state/legacySettingsStoreWrapper";
+import type { AppConfig } from "../lib/types";
 
-const PRESET_STORAGE = "factory-floor-presets-v1";
-
-type Preset = {
-  name: string;
-  config: AppConfig;
-  created: string;
-};
-
-function loadPresets(): Preset[] {
-  try {
-    const raw = localStorage.getItem(PRESET_STORAGE);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
-}
-
-function savePresets(presets: Preset[]) {
-  localStorage.setItem(PRESET_STORAGE, JSON.stringify(presets));
-}
+const presetNamesKey = "app-preset-names-v1";
 
 export const SettingsPage: React.FC = () => {
-  const [config, setConfig] = useState<AppConfig | null>(null);
-  const [newPresetName, setNewPresetName] = useState("");
-  const [presets, setPresets] = useState<Preset[]>([]);
+  const [config, setConfig] = useState<AppConfig>(getAppConfig());
+  const [presetName, setPresetName] = useState("");
+  const [availablePresets, setAvailablePresets] = useState<string[]>([]);
 
   useEffect(() => {
-    loadConfig().then(c => {
+    const unsub = subscribe(c => {
       setConfig(c);
     });
-    setPresets(loadPresets());
+    refreshPresetList();
+    return () => unsub();
   }, []);
 
-  const applyUpdate = async (partial: Partial<AppConfig>) => {
-    await updateConfig(partial);
+  function refreshPresetList() {
+    const presets = listPresets();
+    setAvailablePresets(Object.keys(presets));
+  }
+
+  const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const img = new Image();
+      img.src = reader.result;
+      img.onload = () => {
+        const size = Math.min(img.width, img.height, 512);
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d")!;
+        const sx = (img.width - size) / 2;
+        const sy = (img.height - size) / 2;
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+        const base64 = canvas.toDataURL("image/png");
+        updateCompanyProfile({ logoBase64: base64 });
+      };
+    };
+    reader.readAsDataURL(file);
   };
 
-  const savePreset = () => {
-    if (!config || !newPresetName) return;
-    const p: Preset = { name: newPresetName, config, created: new Date().toISOString() };
-    const updated = [p, ...presets.filter(x => x.name !== newPresetName)];
-    setPresets(updated);
-    savePresets(updated);
-    setNewPresetName("");
+  const handlePresetSave = () => {
+    if (!presetName.trim()) return;
+    savePreset(presetName.trim());
+    refreshPresetList();
+    setPresetName("");
   };
 
-  const recallPreset = (p: Preset) => {
-    updateConfig(p.config as any);
-  };
-
-  const exportPreset = (p: Preset) => {
-    const blob = new Blob([JSON.stringify(p, null, 2)], { type: "application/json" });
+  const handleExport = (name: string) => {
+    const json = exportPreset(name);
+    if (!json) return;
+    const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${p.name.replace(/\s+/g, "_")}.json`;
+    a.download = `${name}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  const importPresetFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    file.text().then(txt => {
-      try {
-        const p: Preset = JSON.parse(txt);
-        setPresets(prev => {
-          const updated = [p, ...prev.filter(x => x.name !== p.name)];
-          savePresets(updated);
-          return updated;
-        });
-        recallPreset(p);
-      } catch (err) {
-        console.error("Invalid preset", err);
-      }
-    });
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+      const name = prompt("Preset name to save as", "ImportedPreset");
+      if (!name) return;
+      importPreset(name, reader.result);
+      refreshPresetList();
+    };
+    reader.readAsText(file);
   };
 
-  if (!config) return null;
-
   return (
-    <div className="module-container" aria-label="Settings cockpit">
-      <h2>Settings</h2>
-
-      <section style={{ display: "flex", flexWrap: "wrap", gap: 24, marginBottom: 24 }}>
-        <div style={{ flex: "1 1 320px", minWidth: 320 }}>
+    <div className="card">
+      <h2 style={{ marginTop: 0 }}>Settings</h2>
+      <div style={{ display: "grid", gap: 24, gridTemplateColumns: "1fr" }}>
+        {/* Branding */}
+        <div className="card">
           <h3>Branding</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <div>
-              <label style={{ fontWeight: 600 }}>Company Name</label>
+              <div style={{ fontWeight: 600 }}>Company Name</div>
               <input
-                aria-label="Company name"
-                value={config.companyName}
-                onChange={e => {
-                  setConfig(c => c && { ...c, companyName: e.target.value });
-                  applyUpdate({ companyName: e.target.value });
-                }}
+                value={config.companyProfile.name}
+                onChange={e => updateCompanyProfile({ name: e.target.value })}
+                placeholder="Company Name"
               />
             </div>
             <div>
-              <label style={{ fontWeight: 600 }}>Company Logo (1:1, max 512px)</label>
-              <input type="file" accept="image/*" onChange={e => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                  if (typeof reader.result !== "string") return;
-                  const img = new Image();
-                  img.src = reader.result;
-                  img.onload = () => {
-                    const size = Math.min(img.width, img.height, 512);
-                    const canvas = document.createElement("canvas");
-                    canvas.width = size;
-                    canvas.height = size;
-                    const ctx = canvas.getContext("2d")!;
-                    const sx = (img.width - size) / 2;
-                    const sy = (img.height - size) / 2;
-                    ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-                    const base64 = canvas.toDataURL("image/png");
-                    setConfig(c => c && { ...c, logoBase64: base64 });
-                    applyUpdate({ logoBase64: base64 });
-                  };
-                };
-                reader.readAsDataURL(file);
-              }} />
+              <div style={{ fontWeight: 600 }}>Company Logo (1:1 up to 512px)</div>
+              <input type="file" accept="image/*" onChange={onLogoChange} />
             </div>
           </div>
         </div>
 
-        <div style={{ flex: "1 1 320px", minWidth: 320 }}>
-          <h3>Tab Labels</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <label>Shift Handover</label>
-              <input
-                value={config.tabLabels.shiftHandover}
-                onChange={e => {
-                  const val = e.target.value;
-                  setConfig(c => c && ({ ...c, tabLabels: { ...c.tabLabels, shiftHandover: val } }));
-                  applyUpdate({ tabLabels: { ...config.tabLabels, shiftHandover: val } });
-                }}
-              />
-            </div>
-            <div>
-              <label>Non-conformance</label>
-              <input
-                value={config.tabLabels.nonConformance}
-                onChange={e => {
-                  const val = e.target.value;
-                  setConfig(c => c && ({ ...c, tabLabels: { ...c.tabLabels, nonConformance: val } }));
-                  applyUpdate({ tabLabels: { ...config.tabLabels, nonConformance: val } });
-                }}
-              />
-            </div>
-            <div>
-              <label>Maintenance</label>
-              <input
-                value={config.tabLabels.maintenance}
-                onChange={e => {
-                  const val = e.target.value;
-                  setConfig(c => c && ({ ...c, tabLabels: { ...c.tabLabels, maintenance: val } }));
-                  applyUpdate({ tabLabels: { ...config.tabLabels, maintenance: val } });
-                }}
-              />
-            </div>
-            <div>
-              <label>Complaint</label>
-              <input
-                value={config.tabLabels.complaint}
-                onChange={e => {
-                  const val = e.target.value;
-                  setConfig(c => c && ({ ...c, tabLabels: { ...c.tabLabels, complaint: val } }));
-                  applyUpdate({ tabLabels: { ...config.tabLabels, complaint: val } });
-                }}
-              />
-            </div>
+        {/* Tab Labels */}
+        <div className="card">
+          <h3>Module Tab Labels</h3>
+          <div style={{ display: "grid", gap: 12 }}>
+            {Object.entries(config.tabLabels)
+              .filter(([k]) => k !== "settings")
+              .map(([key, label]) => (
+                <div key={key}>
+                  <div style={{ fontWeight: 600 }}>{key}</div>
+                  <input
+                    value={label}
+                    onChange={e => updateTabLabels({ [key]: e.target.value } as any)}
+                    placeholder={label}
+                  />
+                </div>
+              ))}
           </div>
         </div>
 
-        <div style={{ flex: "1 1 320px", minWidth: 320 }}>
-          <h3>Document Control</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Document Control */}
+        <div className="card">
+          <h3>Document Control Metadata</h3>
+          <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))" }}>
             <div>
-              <label>Document Number</label>
+              <div style={{ fontWeight: 600 }}>Document Number</div>
               <input
-                value={config.docControl.documentNumber}
-                onChange={e => applyUpdate({ docControl: { ...config.docControl, documentNumber: e.target.value } })}
+                value={config.footer.documentNumber}
+                onChange={e => updateFooterControl({ documentNumber: e.target.value })}
+                placeholder="Doc #"
               />
             </div>
             <div>
-              <label>Document Name</label>
+              <div style={{ fontWeight: 600 }}>Document Name</div>
               <input
-                value={config.docControl.documentName}
-                onChange={e => applyUpdate({ docControl: { ...config.docControl, documentName: e.target.value } })}
+                value={config.footer.documentName}
+                onChange={e => updateFooterControl({ documentName: e.target.value })}
+                placeholder="Name"
               />
             </div>
             <div>
-              <label>Revision Number</label>
+              <div style={{ fontWeight: 600 }}>Revision</div>
               <input
-                value={config.docControl.revision}
-                onChange={e => applyUpdate({ docControl: { ...config.docControl, revision: e.target.value } })}
+                value={config.footer.revision}
+                onChange={e => updateFooterControl({ revision: e.target.value })}
+                placeholder="Rev"
               />
             </div>
             <div>
-              <label>Revision Date (auto-updated)</label>
-              <input value={config.docControl.revisionDate} readOnly />
+              <div style={{ fontWeight: 600 }}>Revision Date</div>
+              <div>{config.footer.revisionDate ? new Date(config.footer.revisionDate).toLocaleString() : "-"}</div>
             </div>
             <div>
-              <label>Controlled?</label>
-              <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ fontWeight: 600 }}>Controlled?</div>
+              <label>
                 <input
                   type="checkbox"
-                  checked={config.docControl.controlled}
-                  onChange={e => applyUpdate({ docControl: { ...config.docControl, controlled: e.target.checked } })}
-                />
-                {config.docControl.controlled ? "Controlled" : "Uncontrolled"}
+                  checked={config.footer.controlled}
+                  onChange={e => updateFooterControl({ controlled: e.target.checked })}
+                />{" "}
+                {config.footer.controlled ? "Controlled" : "Uncontrolled"}
               </label>
             </div>
           </div>
         </div>
-      </section>
 
-      <section style={{ marginBottom: 24 }}>
-        <h3>Presets</h3>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 200px", minWidth: 200 }}>
-            <label>New Preset Name</label>
-            <div style={{ display: "flex", gap: 8 }}>
+        {/* Presets */}
+        <div className="card">
+          <h3>Presets</h3>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 200px" }}>
+              <div style={{ fontWeight: 600 }}>Save Current as Preset</div>
               <input
-                placeholder="Audit Ready"
-                value={newPresetName}
-                onChange={e => setNewPresetName(e.target.value)}
+                placeholder="Preset name"
+                value={presetName}
+                onChange={e => setPresetName(e.target.value)}
               />
-              <button onClick={savePreset} className="btn">Save</button>
-            </div>
-          </div>
-          <div style={{ flex: "1 1 200px", minWidth: 200 }}>
-            <label>Import Preset</label>
-            <input type="file" accept="application/json" onChange={importPresetFile} />
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12 }}>
-          {presets.map(p => (
-            <div key={p.name} className="preset-row">
-              <div className="preset-chip">{p.name}</div>
-              <div style={{ flex: 1 }}>
-                <small>Saved: {new Date(p.created).toLocaleString()}</small>
-              </div>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={() => recallPreset(p)}>Recall</button>
-                <button onClick={() => exportPreset(p)}>Export</button>
+              <div style={{ marginTop: 6 }}>
+                <button onClick={handlePresetSave} style={{ marginRight: 8 }}>
+                  Save
+                </button>
               </div>
             </div>
-          ))}
+            <div style={{ flex: "2 1 300px" }}>
+              <div style={{ fontWeight: 600 }}>Available Presets</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {availablePresets.map(p => (
+                  <div key={p} style={{ border: "1px solid rgba(0,0,0,0.2)", borderRadius: 6, padding: 8 }}>
+                    <div style={{ fontWeight: 600 }}>{p}</div>
+                    <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                      <button onClick={() => applyPreset(p)}>Apply</button>
+                      <button className="secondary-2" onClick={() => handleExport(p)}>Export</button>
+                    </div>
+                  </div>
+                ))}
+                {availablePresets.length === 0 && <div>No presets saved yet.</div>}
+              </div>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontWeight: 600 }}>Import Preset</div>
+                <input type="file" accept="application/json" onChange={handleImport} />
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 };
+

@@ -1,50 +1,68 @@
-﻿import React, { Suspense, useState } from "react";
-import "./index.css"; // keep basic styles
-import "./global-theme.css";
-const CompanyHeader = React.lazy(() => import("./components/CompanyHeader"));
-const ModuleTabs = React.lazy(() => import("./components/ModuleTabs"));
-import { ErrorBoundary } from "./components/ErrorBoundary";
+﻿import React, { useState } from "react";
+import { settingsStore } from "@/state/settingsStore";
+import { CompanyHeader } from "@/components/CompanyHeader";
+import { ReadOnlyFooter } from "@/components/ReadOnlyFooter";
+import { SettingsPage } from "@/settings/SettingsPage";
+import { ShiftHandoverWizard } from "@/modules/handover/ShiftHandoverWizard";
+import { NonConformanceWizard } from "@/modules/nonconformance/NonConformanceWizard";
+import { MaintenanceJobCardWizard } from "@/modules/maintenance/MaintenanceJobCardWizard";
+import { ComplaintWizard } from "@/modules/complaints/ComplaintWizard";
 
-function App() {
-  const [showTabs, setShowTabs] = useState(false);
+type ModuleKey = "handover" | "nonconformance" | "maintenance" | "complaints" | "settings";
+
+const moduleMap: Record<ModuleKey, { label: string; element: React.ReactNode }> = {
+  handover: { label: settingsStore.getState().tabs.handover, element: <ShiftHandoverWizard /> },
+  nonconformance: { label: settingsStore.getState().tabs.nonconformance, element: <NonConformanceWizard /> },
+  maintenance: { label: settingsStore.getState().tabs.maintenance, element: <MaintenanceJobCardWizard /> },
+  complaints: { label: settingsStore.getState().tabs.complaints, element: <ComplaintWizard /> },
+  settings: { label: settingsStore.getState().tabs.settings || "Settings", element: <SettingsPage /> }
+};
+
+export const App: React.FC = () => {
+  const [active, setActive] = useState<ModuleKey>("handover");
+  const cfg = settingsStore.getState();
+
+  // subscribe to update labels if changed
+  React.useEffect(() => {
+    const unsub = settingsStore.subscribe(c => {
+      // force re-render on config change by bumping active (cheap)
+      setActive(a => a);
+    });
+    return unsub;
+  }, []);
+
+  const current = moduleMap[active] || moduleMap["handover"];
+
   return (
-    <div
-      style={{
-        padding: 24,
-        fontFamily: "Poppins, system-ui",
-        color: "#0056A3",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16
-      }}
-    >
-      <ErrorBoundary>
-        <Suspense fallback={<div>Loading header...</div>}>
-          <CompanyHeader />
-        </Suspense>
-      </ErrorBoundary>
-      <div>
-        <button
-          onClick={() => setShowTabs(s => !s)}
-          style={{ marginBottom: 12 }}
-          aria-pressed={showTabs}
-        >
-          {showTabs ? "Hide Module Tabs" : "Enable Module Tabs"}
-        </button>
-      </div>
-      {showTabs && (
-        <ErrorBoundary>
-          <Suspense fallback={<div>Loading module tabs...</div>}>
-            <ModuleTabs />
-          </Suspense>
-        </ErrorBoundary>
-      )}
-      <div style={{ marginTop: "auto", fontSize: "0.75rem", color: "rgba(0,0,0,0.5)" }}>
-        Recovery branch: restore-modules — bring back additional pieces one at a time.
+    <div style={{ padding: 12, maxWidth: "100%", minHeight: "100vh", display: "flex", flexDirection: "column", gap: 8 }}>
+      <CompanyHeader />
+      <nav aria-label="Main navigation" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        {(["handover", "nonconformance", "maintenance", "complaints", "settings"] as ModuleKey[]).map(k => {
+          const isActive = k === active;
+          return (
+            <button
+              key={k}
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => setActive(k)}
+              className="tab"
+              style={{
+                background: isActive ? "var(--accent-3)" : "var(--accent-2)",
+                color: "white",
+                fontSize: "1rem",
+                fontWeight: 600
+              }}
+            >
+              {moduleMap[k].label}
+            </button>
+          );
+        })}
+      </nav>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1 }}>{current.element}</div>
+        {active !== "settings" && <ReadOnlyFooter moduleKey={active} />}
       </div>
     </div>
   );
-}
+};
 
 export default App;

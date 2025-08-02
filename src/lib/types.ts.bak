@@ -15,7 +15,7 @@ export type FooterDocControl = {
   documentNumber: string;
   documentName: string;
   revision: string;
-  revisionDate: string; // ISO string, auto-updates when revision changes
+  revisionDate: string; // ISO string
   controlled: boolean;
 };
 
