@@ -81,3 +81,6 @@ export const ModuleTabs: React.FC = () => {
     </>
   );
 };
+
+export default ModuleTabs;
+

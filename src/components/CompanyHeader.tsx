@@ -37,3 +37,6 @@ export const CompanyHeader: React.FC = () => {
     </div>
   );
 };
+
+export default CompanyHeader;
+
