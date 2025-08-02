@@ -1,0 +1,99 @@
+﻿:root {
+  --color-primary: #0056A3;
+  --color-accent: #00722D;
+  --color-warning: #FFB81C;
+  --color-critical: #D62718;
+  --color-text: #000000;
+  --color-background: #ffffff;
+  --radius: 8px;
+  --shadow: 0 6px 18px rgba(0,0,0,0.08);
+  --transition: 0.15s ease-out;
+  font-family: "Poppins", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --tab-font-size: 1.1rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: inherit;
+  margin: 0;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3 { margin: 0 0 0.5rem 0; font-weight:600; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-positive {
+  background: var(--color-accent);
+  color: white;
+}
+
+.btn-warning {
+  background: var(--color-warning);
+  color: black;
+}
+
+.btn-danger {
+  background: var(--color-critical);
+  color: white;
+}
+
+.card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-primary);
+}
+
+.label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: rgba(0,0,0,0.85);
+}
+
+.tab-button {
+  font-size: var(--tab-font-size);
+}

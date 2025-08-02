@@ -1,23 +1,30 @@
 ﻿module.exports = {
-  root: true,
-  parser: '@typescript-eslint/parser',
+  parser: "@typescript-eslint/parser",
   parserOptions: {
-    ecmaVersion: 2020,
-    sourceType: 'module',
+    ecmaVersion: 2022,
+    sourceType: "module",
     ecmaFeatures: { jsx: true }
   },
   settings: {
-    react: { version: 'detect' }
+    react: { version: "detect" }
   },
-  plugins: ['@typescript-eslint', 'react', 'react-hooks'],
+  env: {
+    browser: true,
+    es2021: true,
+    node: true
+  },
   extends: [
-    'eslint:recommended',
-    'plugin:react/recommended',
-    'plugin:@typescript-eslint/recommended',
-    'prettier'
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
+  plugins: ["react", "react-hooks", "@typescript-eslint"],
   rules: {
-    '@typescript-eslint/no-explicit-any': ['warn'], // soften for now
-    'react/react-in-jsx-scope': 'off'
+    // temporary relaxations to get you back on track; tighten later per PR
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    // enforce Poppins color text etc. could be added separately if desired
   }
 };

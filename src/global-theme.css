@@ -1,0 +1,117 @@
+﻿@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+:root {
+  --font-family: "Poppins", system-ui, sans-serif;
+  --text-color: #0056A3;
+  --primary-accent: #0056A3;
+  --secondary-accent-1: #00722D;
+  --secondary-accent-2: #FFB81C;
+  --secondary-accent-3: #D62718;
+  --tab-font-size: 1.25rem;
+  --radius: 999px;
+  --shadow: 0 16px 40px -8px rgba(0,86,163,0.35);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin:0;
+  font-family: var(--font-family) !important;
+  color: var(--text-color) !important;
+  background: #ffffff;
+  min-height:100vh;
+  line-height:1.4;
+  display:flex;
+  flex-direction:column;
+}
+
+h1,h2,h3,h4,h5,h6,p,span,label,a {
+  color: var(--text-color) !important;
+  margin:0;
+}
+
+/* Navigation tabs */
+.tab-list {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  font-size: var(--tab-font-size);
+}
+.tab-button {
+  font-family: var(--font-family) !important;
+  font-weight:600;
+  background: var(--secondary-accent-1);
+  color:white !important;
+  border:none;
+  padding:.85rem 1rem;
+  border-radius: var(--radius);
+  cursor:pointer;
+  position:relative;
+  transition: transform .15s ease, box-shadow .2s ease;
+  box-shadow: var(--shadow);
+}
+.tab-button[aria-current="page"], .tab-button.active {
+  background: var(--secondary-accent-2);
+  outline: 3px solid var(--secondary-accent-3);
+}
+.tab-button:hover { transform: scale(1.03); }
+.tab-button:active { transform: scale(0.96); }
+
+/* Buttons */
+button {
+  font-family: var(--font-family) !important;
+  font-weight:600;
+  background: var(--primary-accent);
+  color:white !important;
+  border:none;
+  padding:.9rem 1.3rem;
+  border-radius: var(--radius);
+  cursor:pointer;
+  transition: transform .15s ease, box-shadow .2s ease;
+  box-shadow: var(--shadow);
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+button:hover { transform: scale(1.03); }
+button:active { transform: scale(0.96); }
+button.secondary-1 { background: var(--secondary-accent-1); }
+button.secondary-2 { background: var(--secondary-accent-2); }
+button.secondary-3 { background: var(--secondary-accent-3); }
+
+input, select, textarea {
+  font-family: var(--font-family) !important;
+  border:1px solid rgba(0,0,0,0.2);
+  padding:10px 14px;
+  border-radius:8px;
+  color: var(--text-color) !important;
+  background:#fff;
+  width:100%;
+}
+
+.card {
+  background:#fff;
+  border:1px solid rgba(0,0,0,0.08);
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 24px 60px -10px rgba(0,86,163,0.1);
+  margin-bottom:16px;
+}
+
+.footer-readonly {
+  font-size:.85rem;
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  padding:8px 0;
+  border-top:1px solid rgba(0,0,0,0.1);
+}
+
+/* Responsive tokens */
+.container { flex:1; display:flex; flex-direction:column; padding:12px; }
+@media (min-width:641px) { .layout { display:flex; gap:12px; } }
+@media (min-width:1024px) { .nav { flex:0 0 220px; } }
+
+/* Hide legacy theme UI if still present */
+.theme-picker, .theme-selector, .preset-themes, .scheme-name, .color-control {
+  display:none !important;
+}

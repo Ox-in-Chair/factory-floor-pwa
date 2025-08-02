@@ -1,51 +1,83 @@
-﻿import React, { useState } from 'react';
-import { ShiftHandoverWizard } from './ShiftHandoverWizard';
-import { NonConformanceWizard } from './NonConformanceWizard';
-import { MaintenanceJobCardWizard } from './MaintenanceJobCardWizard';
-import { ComplaintWizard } from './ComplaintWizard';
+﻿/* src/components/ModuleTabs.tsx */
+import React, { useState, useEffect } from "react";
+import { ShiftHandoverWizard } from "./ShiftHandoverWizard";
+import { NonConformanceWizard } from "./NonConformanceWizard";
+import { MaintenanceJobCardWizard } from "./MaintenanceJobCardWizard";
+import { ComplaintWizard } from "./ComplaintWizard";
+import { SettingsPage } from "./SettingsPage";
 
-const TABS = [
-  { key: 'handover', label: 'Shift Handover', Component: ShiftHandoverWizard },
-  { key: 'nonconformity', label: 'Non-conformance Advice', Component: NonConformanceWizard },
-  { key: 'maintenance', label: 'Maintenance Job Card', Component: MaintenanceJobCardWizard },
-  { key: 'complaint', label: 'Complaint Handling', Component: ComplaintWizard },
-];
+type TabKey = "shiftHandover" | "nonConformance" | "maintenance" | "complaint" | "settings";
+
+const DISPLAY_NAMES: Record<TabKey, string> = {
+  shiftHandover: "Shift-Change Handover Report",
+  nonConformance: "Non-conformance Advice",
+  maintenance: "Maintenance Job Card",
+  complaint: "Complaint Handling",
+  settings: "Settings"
+};
 
 export const ModuleTabs: React.FC = () => {
-  const [active, setActive] = useState<string>('handover');
+  const [active, setActive] = useState<TabKey>("shiftHandover");
+  const [labels, setLabels] = useState<Record<string, string>>(DISPLAY_NAMES);
+  const [config, setConfig] = useState<AppConfig | null>(null);
+
+  useEffect(() => {
+    subscribe(c => {
+      setConfig(c);
+      setLabels({
+        ...(labels as any),
+        shiftHandover: c.tabLabels.shiftHandover,
+        nonConformance: c.tabLabels.nonConformance,
+        maintenance: c.tabLabels.maintenance,
+        complaint: c.tabLabels.complaint,
+      });
+    });
+    loadConfig().then(c => {
+      setConfig(c);
+      setLabels({
+        ...(labels as any),
+        shiftHandover: c.tabLabels.shiftHandover,
+        nonConformance: c.tabLabels.nonConformance,
+        maintenance: c.tabLabels.maintenance,
+        complaint: c.tabLabels.complaint,
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const renderCurrent = () => {
+    switch (active) {
+      case "shiftHandover":
+        return <ShiftHandoverWizard />;
+      case "nonConformance":
+        return <NonConformanceWizard />;
+      case "maintenance":
+        return <MaintenanceJobCardWizard />;
+      case "complaint":
+        return <ComplaintWizard />;
+      case "settings":
+        return <SettingsPage />;
+    }
+  };
+
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setActive(t.key)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              background: active === t.key ? 'var(--color-blue)' : 'transparent',
-              color: active === t.key ? '#fff' : 'var(--color-black)',
-              border: active === t.key ? 'none' : '1px solid rgba(0,0,0,0.1)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <div>
-        {TABS.map(t => {
-          if (t.key !== active) return null;
-          const Component = t.Component;
-          return (
-            <div key={t.key}>
-              <Component />
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <>
+      <nav className="nav-bar" aria-label="Main navigation">
+        <ul className="tab-list">
+          {(["shiftHandover", "nonConformance", "maintenance", "complaint", "settings"] as TabKey[]).map(k => (
+            <li key={k}>
+              <button
+                className="tab"
+                aria-current={active === k ? "page" : undefined}
+                onClick={() => setActive(k)}
+              >
+                {labels[k]}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="content">{renderCurrent()}</div>
+    </>
   );
 };
